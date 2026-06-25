@@ -18,22 +18,11 @@ jobs:
   build:
     strategy:
       matrix:
-        runtime: [ linux-s390x, linux-ppc64le, linux-x64, linux-arm64, linux-riscv64 ]
+        # TEMP(fork-test): only build riscv64 until native hardware is in the
+        # Canonical self-hosted pool. Revert to the full arch list before sending
+        # the patch upstream.
+        runtime: [ linux-riscv64 ]
         include:
-
-        - runtime: linux-x64
-          runs_on: amd64
-
-        - runtime: linux-arm64
-          runs_on: arm64
-
-        - runtime: linux-ppc64le
-          runs_on: ppc64le
-          patch_tag: ppc64le
-
-        - runtime: linux-s390x
-          runs_on: s390x
-          patch_tag: s390x
 
         - runtime: linux-riscv64
           runs_on: riscv64
@@ -51,7 +40,12 @@ jobs:
     - name: Install DotNet SDK (riscv64 snap)
       if: matrix.dotnet_snap != ''
       run: |
-        sudo snap install ${{ matrix.dotnet_snap }} --classic
+        # TEMP(fork-test): the dotnet-sdk-riscv snap is not on the Snap Store
+        # yet, so download it from a temporary host and install with
+        # --dangerous. Once published to the store, revert to:
+        #   sudo snap install ${{ matrix.dotnet_snap }} --classic
+        wget -q "https://vhaudiquet.fr/public/dotnet-riscv/dotnet-sdk-riscv_8.0.101_riscv64.snap" -O /tmp/dotnet-sdk-riscv.snap
+        sudo snap install /tmp/dotnet-sdk-riscv.snap --dangerous --classic
         echo "DOTNET_ROOT=/snap/${{ matrix.dotnet_snap }}/current/dotnet" >> $GITHUB_ENV
         echo "/snap/${{ matrix.dotnet_snap }}/current/dotnet" >> $GITHUB_PATH
 
