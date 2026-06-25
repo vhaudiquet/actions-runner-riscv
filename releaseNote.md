@@ -142,3 +142,4 @@ The SHA-256 checksums for the packages included in this build are shown below:
 - actions-runner-linux-x64-<RUNNER_VERSION>.tar.gz <!-- BEGIN SHA linux-x64 --><LINUX_X64_SHA><!-- END SHA linux-x64 -->
 - actions-runner-linux-arm64-<RUNNER_VERSION>.tar.gz <!-- BEGIN SHA linux-arm64 --><LINUX_ARM64_SHA><!-- END SHA linux-arm64 -->
 - actions-runner-linux-arm-<RUNNER_VERSION>.tar.gz <!-- BEGIN SHA linux-arm --><LINUX_ARM_SHA><!-- END SHA linux-arm -->
+- actions-runner-linux-riscv64-<RUNNER_VERSION>.tar.gz <!-- BEGIN SHA linux-riscv64 --><LINUX_RISCV64_SHA><!-- END SHA linux-riscv64 -->

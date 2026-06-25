@@ -18,7 +18,7 @@ jobs:
   build:
     strategy:
       matrix:
-        runtime: [ linux-s390x, linux-ppc64le, linux-x64, linux-arm64 ]
+        runtime: [ linux-s390x, linux-ppc64le, linux-x64, linux-arm64, linux-riscv64 ]
         include:
 
         - runtime: linux-x64
@@ -35,21 +35,44 @@ jobs:
           runs_on: s390x
           patch_tag: s390x
 
+        - runtime: linux-riscv64
+          runs_on: riscv64
+          patch_tag: riscv64
+          dotnet_snap: dotnet-sdk-riscv
+
     runs-on: [ self-hosted, noble, "${{ matrix.runs_on }}" ]
     steps:
     - uses: actions/checkout@v4
 
     - name: Install DotNet SDK
+      if: matrix.dotnet_snap == ''
       run: sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
 
+    - name: Install DotNet SDK (riscv64 snap)
+      if: matrix.dotnet_snap != ''
+      run: |
+        sudo snap install ${{ matrix.dotnet_snap }} --classic
+        echo "DOTNET_ROOT=/snap/${{ matrix.dotnet_snap }}/current/dotnet" >> $GITHUB_ENV
+        echo "/snap/${{ matrix.dotnet_snap }}/current/dotnet" >> $GITHUB_PATH
+
     - name: Apply patches
-      if: matrix.runtime == 'linux-s390x' || matrix.runtime == 'linux-ppc64le'
+      if: matrix.runtime == 'linux-s390x' || matrix.runtime == 'linux-ppc64le' || matrix.runtime == 'linux-riscv64'
       run: |
         git apply patches/runner-main-sdk8-${{ matrix.patch_tag }}.patch
 
     - name: Update DotNet required version pin
+      if: matrix.dotnet_snap == ''
       run: |
         sed -i "s/$( cat src/global.json | jq -r '.sdk.version' )/8.0/" src/global.json
+
+    - name: Update DotNet required version pin (riscv64 snap)
+      if: matrix.dotnet_snap != ''
+      run: |
+        # Pin global.json to the exact SDK version provided by the snap, since
+        # the riscv64 .NET SDK is only available via the snap (no apt/PPA build).
+        SDK_VERSION=$(dotnet --version)
+        echo "Pinning global.json to SDK $SDK_VERSION"
+        jq --arg v "$SDK_VERSION" '.sdk.version = $v' src/global.json > src/global.json.tmp && mv src/global.json.tmp src/global.json
 
     # Build runner layout
     - name: Build & Layout Release
